@@ -2,7 +2,8 @@ name: ci/cd pipeline to deploy to tomcat
 
 on:
   push:
-    branches: master
+    branches:
+      - master
 
 jobs:
   build-deploy:
@@ -15,8 +16,8 @@ jobs:
       - name: set-up jdk
         uses: actions/setup-java@v3
         with:
-          distribution: 'temurin'
-          java-version: '17' # Updated Java Version
+          distribution: temurin
+          java-version: '17'
 
       - name: validate with maven
         run: mvn validate
@@ -30,7 +31,7 @@ jobs:
       - name: package with maven
         run: mvn clean package
 
-     - name: verify WAR file
+      - name: verify WAR file
         run: ls -lh target/
 
       - name: Build, Test and SonarQube Scan
@@ -39,3 +40,4 @@ jobs:
             -Dsonar.projectKey=train-ticket-reservation \
             -Dsonar.host.url="${{ secrets.SONAR_HOST_URL }}" \
             -Dsonar.login="${{ secrets.SONAR_TOKEN }}"
+            
