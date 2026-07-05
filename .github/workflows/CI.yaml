@@ -1,54 +1,34 @@
-name: Build and Deploy train-ticket-reservation
+name: ci/cd pipeline to deploy to tomcat
 
 on:
   push:
-    branches:
-      - master
-  workflow_dispatch:
+    branches: master
 
 jobs:
-  build:
+  build-deploy:
     runs-on: ubuntu-latest
 
     steps:
-      - name: 📥 Checkout code
-        uses: actions/checkout@v4
+      - name: checkout code
+        uses: actions/checkout@v3
 
-      - name: ☕ Set up Java
-        uses: actions/setup-java@v4
+      - name: set-up jdk
+        uses: actions/setup-java@v3
         with:
           distribution: 'temurin'
-          java-version: '17'
+          java-version: '17' # Updated Java Version
 
-      - name: 🔨 Build with Maven
-        run: mvn clean package -DskipTests
+      - name: validate with maven
+        run: mvn validate
 
-      - name: 🗂 Find WAR file
-        run: echo "WAR_FILE=$(ls target/*.war | head -n 1)" >> $GITHUB_ENV
+      - name: compile with maven
+        run: mvn compile
 
-      - name: ⬆ Upload WAR artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: war-file
-          path: ${{ env.WAR_FILE }}
+      - name: test with maven
+        run: mvn test
 
-     
-      - name: Configure Maven settings.xml for Nexus
-        run: |
-          mkdir -p ~/.m2
-          cat <<EOF > ~/.m2/settings.xml
-          <settings>
-            <servers>
-              <server>
-                <id>nexus</id>
-                <username>${{ secrets.NEXUS_USERNAME }}</username>
-                <password>${{ secrets.NEXUS_PASSWORD }}</password>
-              </server>
-            </servers>
-          </settings>
-          EOF
+      - name: package with maven
+        run: mvn clean package
 
-      - name: Upload Artifact to Nexus
-        run: mvn deploy -DaltDeploymentRepository=nexus::default::${{ secrets.NEXUS_REPO_URL }}
-  
-      
+      - name: verify WAR file
+        run: ls -lh target 
