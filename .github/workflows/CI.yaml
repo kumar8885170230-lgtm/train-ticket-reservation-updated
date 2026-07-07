@@ -10,30 +10,31 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: checkout code
-        uses: actions/checkout@v3
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-      - name: set-up jdk
-        uses: actions/setup-java@v3
+      - name: Set up JDK
+        uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '17'
 
-      - name: validate with maven
+      - name: Validate with Maven
         run: mvn validate
 
-      - name: compile with maven
+      - name: Compile with Maven
         run: mvn compile
 
-      - name: test with maven
+      - name: Test with Maven
         run: mvn test
 
-      - name: package with maven
+      - name: Package with Maven
         run: mvn clean package
 
-      - name: verify WAR file
+      - name: Verify WAR file
         run: ls -lh target
-       - name: Find WAR file
+
+      - name: Find WAR file
         run: echo "WAR_FILE=$(ls target/*.war | head -n 1)" >> $GITHUB_ENV
 
       - name: Upload WAR artifact
@@ -56,3 +57,14 @@ jobs:
             </servers>
           </settings>
           EOF
+
+      - name: Deploy WAR to Nexus
+        run: |
+          mvn deploy:deploy-file \
+            -DgroupId=com.train \
+            -DartifactId=train-ticket-reservation \
+            -Dversion=1.0.0 \
+            -Dpackaging=war \
+            -Dfile=${{ env.WAR_FILE }} \
+            -DrepositoryId=nexus \
+            -Durl=${{ secrets.NEXUS_URL }}/repository/${{ secrets.NEXUS_REPOSITORY }}/
